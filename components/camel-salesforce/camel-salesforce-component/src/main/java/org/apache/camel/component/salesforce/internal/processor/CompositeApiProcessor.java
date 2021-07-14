@@ -86,6 +86,9 @@ public final class CompositeApiProcessor extends AbstractSalesforceProcessor {
                 case COMPOSITE_TREE:
                     return processInternal(SObjectTree.class, exchange, compositeClient::submitCompositeTree,
                             this::processCompositeTreeResponse, callback);
+                case COMPOSITE_GRAPH:
+                	return processRaw(exchange, compositeClient,
+                            this::processCompositeGraphResponseRaw, callback);
                 case COMPOSITE_BATCH:
                     return processInternal(SObjectBatch.class, exchange, compositeClient::submitCompositeBatch,
                             this::processCompositeBatchResponse, callback);
@@ -131,6 +134,27 @@ public final class CompositeApiProcessor extends AbstractSalesforceProcessor {
     }
 
     void processCompositeResponseRaw(
+            final Exchange exchange, final Optional<InputStream> responseBody, final Map<String, String> headers,
+            final SalesforceException exception, final AsyncCallback callback) {
+        try {
+            if (!responseBody.isPresent()) {
+                exchange.setException(exception);
+            } else {
+                final Message in = exchange.getIn();
+                final Message out = exchange.getOut();
+
+                final InputStream response = responseBody.get();
+
+                out.copyFromWithNewBody(in, response);
+                out.getHeaders().putAll(headers);
+            }
+        } finally {
+            // notify callback that exchange is done
+            callback.done(false);
+        }
+    }
+    
+    void processCompositeGraphResponseRaw(
             final Exchange exchange, final Optional<InputStream> responseBody, final Map<String, String> headers,
             final SalesforceException exception, final AsyncCallback callback) {
         try {
@@ -250,6 +274,29 @@ public final class CompositeApiProcessor extends AbstractSalesforceProcessor {
         String method = getParameter(SalesforceEndpointConfig.COMPOSITE_METHOD, exchange, IGNORE_BODY, IS_OPTIONAL);
 
         compositeClient.submitCompositeRaw(body, determineHeaders(exchange),
+                (response, responseHeaders, exception) -> responseHandler.handleResponse(exchange, response, responseHeaders,
+                        exception, callback),
+                method);
+
+        return false;
+    }
+    
+    boolean processCompositeGraphRaw(
+            final Exchange exchange, final CompositeApiClient compositeClient,
+            final ResponseHandler<InputStream> responseHandler, final AsyncCallback callback)
+            throws SalesforceException {
+        final InputStream body;
+
+        final Message in = exchange.getIn();
+        try {
+            body = in.getMandatoryBody(InputStream.class);
+        } catch (final InvalidPayloadException e) {
+            throw new SalesforceException(e);
+        }
+
+        String method = getParameter(SalesforceEndpointConfig.COMPOSITE_METHOD, exchange, IGNORE_BODY, IS_OPTIONAL);
+
+        compositeClient.submitCompositeGraphRaw(body, determineHeaders(exchange),
                 (response, responseHeaders, exception) -> responseHandler.handleResponse(exchange, response, responseHeaders,
                         exception, callback),
                 method);
