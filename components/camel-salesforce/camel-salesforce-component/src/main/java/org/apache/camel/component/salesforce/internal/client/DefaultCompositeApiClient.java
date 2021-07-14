@@ -116,6 +116,30 @@ public class DefaultCompositeApiClient extends AbstractClientBase implements Com
             }
         });
     }
+    
+    public void submitCompositeGraphRaw(
+            final InputStream raw, final Map<String, List<String>> headers,
+            final ResponseCallback<InputStream> callback, String compositeMethod)
+            throws SalesforceException {
+        checkCompositeFormat(format, SObjectComposite.REQUIRED_PAYLOAD_FORMAT);
+
+        final String url = versionUrl() + "composite";
+
+        if (compositeMethod == null) {
+            compositeMethod = HttpMethod.POST.asString();
+        }
+        Request request = createRequest(compositeMethod, url, headers);
+
+        final ContentProvider content = new InputStreamContentProvider(raw);
+        request.content(content);
+
+        doHttpRequest(request, new ClientResponseCallback() {
+            @Override
+            public void onResponse(InputStream response, Map<String, String> headers, SalesforceException ex) {
+                callback.onResponse(Optional.of(response), headers, ex);
+            }
+        });
+    }
 
     @Override
     public void submitComposite(
