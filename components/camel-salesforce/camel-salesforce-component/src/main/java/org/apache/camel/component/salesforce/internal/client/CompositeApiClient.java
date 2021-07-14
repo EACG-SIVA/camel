@@ -47,6 +47,11 @@ public interface CompositeApiClient {
             InputStream raw, Map<String, List<String>> headers, ResponseCallback<InputStream> callback,
             String method)
             throws SalesforceException;
+    
+    void submitCompositeGraphRaw(
+            InputStream raw, Map<String, List<String>> headers, ResponseCallback<InputStream> callback,
+            String method)
+            throws SalesforceException;
 
     void submitComposite(
             SObjectComposite composite, Map<String, List<String>> headers, ResponseCallback<SObjectCompositeResponse> callback)
