@@ -190,7 +190,7 @@ public class CompositeGraphIntegrationTest extends AbstractSalesforceTestBase {
                                     "      \"referenceId\": \"contacts\"\n" +
                                     "    }]\n" +
                                     "}\n";
-        final String response = testRawComposite(rawComposite);
+        final String response = testRawCompositeGraph(rawComposite);
         ObjectMapper objectMapper = new ObjectMapper();
         SObjectCompositeResponse sObjectCompositeResponse = objectMapper.readValue(
                 response, SObjectCompositeResponse.class);
@@ -242,9 +242,9 @@ public class CompositeGraphIntegrationTest extends AbstractSalesforceTestBase {
         return response;
     }*/
 
-    String testRawComposite(final String rawComposite) {
-        final String rawCompositeUri = "salesforce:composite?rawPayload=true";
-        final String response = template.requestBody(rawCompositeUri, rawComposite, String.class);
+    String testRawCompositeGraph(final String rawCompositeGraph) {
+        final String rawCompositeGraphUri = "salesforce:composite-graph?rawPayload=true";
+        final String response = template.requestBody(rawCompositeGraphUri, rawCompositeGraph, String.class);
 
         Assertions.assertThat(response).as("Response should be provided").isNotNull();
 
